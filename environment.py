@@ -1,6 +1,12 @@
 import pygame
 import random
 import time
+import numpy as np
+
+import tensorflow as tf
+import numpy as np
+from tensorflow import keras
+import NN
 
 WIN_HEIGHT = 196
 WIN_WIDTH = 392
@@ -13,6 +19,8 @@ BLACK = (0, 0, 0)
 
 AGENT = (0, 255, 0)
 OBJECTIVE = (255, 0, 0)
+
+ACTIONS_MAP = {'W':0, 'A':1, 'S':2, 'D':3, 'WA':4, 'WD':5, 'SA':6, 'SD':7}
 
 class Spot():
     def __init__(self, row, column, width, total_rows):
@@ -59,7 +67,7 @@ class Agent():
         
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.get_coordinates()[0], self.get_coordinates()[1], self.agent_width, self.agent_width))
-    
+        
 
 def make_grid(rows, columns, width):
     grid = []
@@ -70,7 +78,7 @@ def make_grid(rows, columns, width):
             spot = Spot(i, j, gap, rows)
             grid[i].append(spot)
 
-    return grid
+    return np.array(grid)
 
 def draw_grid(win, rows, columns, width, height):
     r_gap =  height // rows
@@ -125,6 +133,7 @@ def agent_listerner(event, agent):
         if event.key == pygame.K_d:
             if agent.get_pos()[0] != 13:
                 agent.row = agent.row + 1
+
 def agent_object_picker(agent, grid):
     current_pos = agent.get_pos()
     if grid[current_pos[0]][current_pos[1]].state == True:
@@ -141,23 +150,28 @@ def main():
     SCREEN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     grid = make_grid(ROWS, COLUMNS, WIN_WIDTH)
     agent = Agent(0, 0, 28, 0)
+    cur_start = time.time()
     while True:
         if time.time() - time_limit >= 120:
             print('time limit reached')
             print(f'score: {agent.score}')
             break
         if time.time() - start >= 0.4:
-            start = time.time()
             chosen_spot = random_spot_chooser(grid, agent.get_pos())
             if chosen_spot == None:
                 print('Mission Failed!! All cells have been occupied')
                 print(f'score: {agent.score}')
                 break
             grid[chosen_spot.row][chosen_spot.column].state = True
+            start = time.time()
         
         grid = draw(SCREEN, grid, ROWS, COLUMNS, WIN_WIDTH, WIN_HEIGHT)
         
         agent.draw(SCREEN)
+        
+        if time.time() - cur_start >= 1:
+            print(NN.neural_net(grid, ACTIONS_MAP))
+            cur_start = time.time()
         
         event_listerners(agent)
         
