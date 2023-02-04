@@ -55,3 +55,12 @@ def train(env, replay_memory, model, target_model, done):
     
     model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=True)
 
+'''
+    Observation would have the state (position) of the agent, state (positions) of other cells in the env    
+
+    State 
+    Action
+    New State
+    Reward
+    Done
+'''

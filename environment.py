@@ -3,10 +3,7 @@ import random
 import time
 import numpy as np
 
-import tensorflow as tf
 import numpy as np
-from tensorflow import keras
-import NN
 
 WIN_HEIGHT = 196
 WIN_WIDTH = 392
@@ -77,7 +74,7 @@ def make_grid(rows, columns, width):
         for j in range(rows):
             spot = Spot(i, j, gap, rows)
             grid[i].append(spot)
-
+    
     return np.array(grid)
 
 def draw_grid(win, rows, columns, width, height):
@@ -170,7 +167,7 @@ def main():
         agent.draw(SCREEN)
         
         if time.time() - cur_start >= 1:
-            print(NN.neural_net(grid, ACTIONS_MAP))
+            print(grid)
             cur_start = time.time()
         
         event_listerners(agent)
