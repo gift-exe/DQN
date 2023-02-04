@@ -35,6 +35,7 @@ def agent(state_shape, action_shape):
     The highest value 0.7 is the Q-Value.
     The index of the highest action (0.7) is action #1.
     """
+    print('state_shape: ',state_shape)
     learning_rate = 0.001
     init = tf.keras.initializers.HeUniform()
     model = keras.Sequential()
@@ -122,7 +123,8 @@ def main():
                 encoded_reshaped = encoded.reshape([1, encoded.shape[0]])
                 predicted = model.predict(encoded_reshaped).flatten()
                 action = np.argmax(predicted)
-            new_observation, reward, done, info = env.step(action)
+            
+            new_observation, reward, done, truncated, info = env.step(action)
             replay_memory.append([observation, action, reward, new_observation, done])
 
             # 3. Update the Main Network using the Bellman Equation
