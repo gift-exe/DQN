@@ -15,6 +15,8 @@ from collections import deque
 import time
 import random
 
+
+
 RANDOM_SEED = 5
 tf.random.set_seed(RANDOM_SEED)
 
@@ -35,7 +37,7 @@ def agent(state_shape, action_shape):
     The highest value 0.7 is the Q-Value.
     The index of the highest action (0.7) is action #1.
     """
-    print('state_shape: ',state_shape)
+
     learning_rate = 0.001
     init = tf.keras.initializers.HeUniform()
     model = keras.Sequential()
@@ -43,6 +45,7 @@ def agent(state_shape, action_shape):
     model.add(keras.layers.Dense(12, activation='relu', kernel_initializer=init))
     model.add(keras.layers.Dense(action_shape, activation='linear', kernel_initializer=init))
     model.compile(loss=tf.keras.losses.Huber(), optimizer=tf.keras.optimizers.Adam(lr=learning_rate), metrics=['accuracy'])
+
     return model
 
 def get_qs(model, state, step):
@@ -104,7 +107,8 @@ def main():
 
     for episode in range(train_episodes):
         total_training_rewards = 0
-        observation = env.reset()
+        obs = env.reset()
+        observation, _ = obs
         done = False
         while not done:
             steps_to_update_target_model += 1
@@ -119,12 +123,14 @@ def main():
             else:
                 # Exploit best known action
                 # model dims are (batch, env.observation_space.n)
+                
                 encoded = observation
                 encoded_reshaped = encoded.reshape([1, encoded.shape[0]])
                 predicted = model.predict(encoded_reshaped).flatten()
                 action = np.argmax(predicted)
             
             new_observation, reward, done, truncated, info = env.step(action)
+            print(reward)
             replay_memory.append([observation, action, reward, new_observation, done])
 
             # 3. Update the Main Network using the Bellman Equation

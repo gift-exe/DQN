@@ -3,8 +3,8 @@ import random
 import time
 import numpy as np
 
-import numpy as np
-
+import NN
+global SCREEN
 WIN_HEIGHT = 196
 WIN_WIDTH = 392
 ROWS = 7
@@ -17,7 +17,7 @@ BLACK = (0, 0, 0)
 AGENT = (0, 255, 0)
 OBJECTIVE = (255, 0, 0)
 
-ACTIONS_MAP = {'W':0, 'A':1, 'S':2, 'D':3, 'WA':4, 'WD':5, 'SA':6, 'SD':7}
+
 
 class Spot():
     def __init__(self, row, column, width, total_rows):
@@ -31,7 +31,7 @@ class Spot():
         self.color = self.get_color()
     
     def __repr__(self):
-        return f'position: {(self.row, self.column)}, \n state: {self.state}\n'
+        return f'(position: {(self.row, self.column)}, \n state: {self.state}\n)'
     
     def get_color(self):
         if self.state:
@@ -53,6 +53,8 @@ class Agent():
         self.agent_width = width
         self.score = score
         self.color = AGENT
+        self.actions_map = {'W':0, 'A':1, 'S':2, 'D':3, 'WA':4, 'WD':5, 'SA':6, 'SD':7}
+        self.actions = np.array([0, 1, 2, 3, 4, 5, 6, 7])
         
     def get_coordinates(self):
         x = self.agent_width * self.row
@@ -64,7 +66,39 @@ class Agent():
         
     def draw(self, win):
         pygame.draw.rect(win, self.color, (self.get_coordinates()[0], self.get_coordinates()[1], self.agent_width, self.agent_width))
-        
+    
+    def move_up(self):
+        if self.get_pos()[1] != 0:
+            self.column = self.column -1
+    def move_down(self):
+        if self.get_pos()[1] != 6:
+            self.column = self.column + 1
+    def move_left(self):
+        if self.get_pos()[0] != 0:
+            self.row = self.row - 1
+    def move_right(self):
+        if self.get_pos()[0] != 13:
+            self.row = self.row + 1
+    
+    def agent_listerner(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_a:
+                self.move_left()
+            if event.key == pygame.K_w:
+                self.move_up()
+            if event.key == pygame.K_s:
+                self.move_down()
+            if event.key == pygame.K_d:
+                self.move_right()
+
+    def object_picker(self, grid):
+        current_pos = self.get_pos()
+        if grid[current_pos[0]][current_pos[1]].state == True:
+            self.score = self.score + 1
+            grid[current_pos[0]][current_pos[1]].state = False
+            return 1
+        return 0
+
 
 def make_grid(rows, columns, width):
     grid = []
@@ -74,7 +108,7 @@ def make_grid(rows, columns, width):
         for j in range(rows):
             spot = Spot(i, j, gap, rows)
             grid[i].append(spot)
-    
+
     return np.array(grid)
 
 def draw_grid(win, rows, columns, width, height):
@@ -95,7 +129,6 @@ def draw(win, grid, rows, columns, width, height):
     pygame.display.update()
     return grid
 
-#to create a function that randomly assign states to different spot objects in the grid
 def random_spot_chooser(grid, agent_position):
     new_grid = []
     for row in grid:
@@ -114,67 +147,70 @@ def event_listerners(agent):
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
-        agent_listerner(event, agent)
-            
-def agent_listerner(event, agent):
-    if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_a:
-            if agent.get_pos()[0] != 0:
-                agent.row = agent.row - 1
-        if event.key == pygame.K_w:
-            if agent.get_pos()[1] != 0:
-                agent.column = agent.column -1
-        if event.key == pygame.K_s:
-            if agent.get_pos()[1] != 6:
-                agent.column = agent.column + 1
-        if event.key == pygame.K_d:
-            if agent.get_pos()[0] != 13:
-                agent.row = agent.row + 1
+        agent.listerner(event, agent)
 
-def agent_object_picker(agent, grid):
-    current_pos = agent.get_pos()
-    if grid[current_pos[0]][current_pos[1]].state == True:
-        agent.score = agent.score + 1
-        grid[current_pos[0]][current_pos[1]].state = False
+def event_listerners_for_ai():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
+        if event.type == pygame.K_q:
+            pygame.quit()
+            quit()
 
-def main():
-    global SCREEN
-    start = time.time()
-    time_limit = time.time()
-    pygame.init()
-    fps=30
-    fpsclock=pygame.time.Clock()
-    SCREEN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-    grid = make_grid(ROWS, COLUMNS, WIN_WIDTH)
-    agent = Agent(0, 0, 28, 0)
-    cur_start = time.time()
-    while True:
-        if time.time() - time_limit >= 120:
-            print('time limit reached')
-            print(f'score: {agent.score}')
-            break
-        if time.time() - start >= 0.4:
-            chosen_spot = random_spot_chooser(grid, agent.get_pos())
-            if chosen_spot == None:
-                print('Mission Failed!! All cells have been occupied')
-                print(f'score: {agent.score}')
-                break
-            grid[chosen_spot.row][chosen_spot.column].state = True
-            start = time.time()
-        
-        grid = draw(SCREEN, grid, ROWS, COLUMNS, WIN_WIDTH, WIN_HEIGHT)
-        
-        agent.draw(SCREEN)
-        
-        if time.time() - cur_start >= 1:
-            print(grid)
-            cur_start = time.time()
-        
-        event_listerners(agent)
-        
-        agent_object_picker(agent, grid)
-        
-        pygame.display.update()
-        fpsclock.tick(fps)
+def check_if_episode_time_limit_is_reached(agent, episode_time_limit):
+    if time.time() - episode_time_limit >= 120:
+        print('\n\ntime limit reached\n\n')
+        print(f'score: {agent.score}')
+        return True
 
-main()
+def check_if_grid_filled_with_objects(agent, grid, object_spawn_interval):
+    done = False
+    if time.time() - object_spawn_interval >= 1:
+        chosen_spot = random_spot_chooser(grid, agent.get_pos())
+        if chosen_spot == None:
+            print('\n\nMission Failed!! All cells have been occupied\n')
+            print(f'score: {agent.score}\n\n')
+            done = True
+        grid[chosen_spot.row][chosen_spot.column].state = True
+        object_spawn_interval = time.time()
+    return done, grid
+
+def check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid):
+    done = check_if_episode_time_limit_is_reached(agent, episode_time_limit)
+    done, grid = check_if_grid_filled_with_objects(agent, grid, object_spawn_interval)
+    return done, grid
+
+def ai_act(agent, action):
+    if action == 0:
+        agent.move_up()
+    elif action == 1:
+        agent.move_left()
+    elif action == 2:
+        agent.move_down()
+    elif action == 3:
+        agent.move_right()
+    elif action == 4:
+        agent.move_up()
+        agent.move_left()
+    elif action == 5:
+        agent.move_up()
+        agent.move_right()
+    elif action == 6:
+        agent.move_down()
+        agent.move_left()
+    elif action == 7:
+        agent.move_down()
+        agent.move_right()
+    else:
+        print(f'Action Value {action} Not Valid !!')
+
+def step(agent, action, grid, object_spawn_interval, episode_time_limit):
+    event_listerners_for_ai()
+    ai_act(agent, action)   
+    reward = agent.object_picker(grid)    
+    done, curr_state = check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid)#new state after action
+    return curr_state, reward, done
+    
+
+
