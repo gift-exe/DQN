@@ -5,13 +5,10 @@ from NN import *
 
 
 def main():
-    object_spawn_interval = time.time()
-    episode_time_limit = time.time()
     pygame.init()
     fps=30
     fpsclock=pygame.time.Clock()
     SCREEN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-    grid = make_grid(ROWS, COLUMNS, WIN_WIDTH)
     agent = Agent(0, 0, 28, 0)
     
     epsilon = 1 # Epsilon-greedy algorithm in initialized at 1 meaning every step is random at the start
@@ -31,6 +28,10 @@ def main():
     steps_to_update_target_model = 0
 
     for episode in range(300):
+        episode_time_limit = time.time()
+        object_spawn_interval = time.time()
+        grid = make_grid(ROWS, COLUMNS, WIN_WIDTH)
+        agent.score = 0
         done = False
         while not done:
             steps_to_update_target_model += 1
@@ -42,16 +43,28 @@ def main():
             else:
                 #exploit
                 curr_state = feature_extractor(grid, agent)
-                prediction = model.predict(curr_state)
+                print('Exploiting')
+                prediction = model.predict(np.array([curr_state]))
                 action = np.argmax(prediction)
+            
+            new_state, reward, done, object_spawn_interval = step(agent, action, grid, object_spawn_interval, episode_time_limit)
+            
+            object_spawn_interval = object_spawn_interval
 
-            new_state, reward, done = step(agent, action, grid, object_spawn_interval, episode_time_limit)
+
+            grid = draw(SCREEN, new_state, ROWS, COLUMNS, WIN_WIDTH, WIN_HEIGHT)
+            agent.draw(SCREEN)
+            pygame.display.update()
+            fpsclock.tick(fps)
+
             replay_memory.append([grid, agent, action, reward, new_state, done]) #grid == state
 
-            if steps_to_update_target_model % 4 == 0:
+            if steps_to_update_target_model % 4 == 0 or done:
                 train(replay_memory, model, target_model, done)
             
             grid = new_state
+            agent.score += reward
+
 
             if done:
                 print('Total training rewards: {} after n steps = {} with final reward = {}'.format(agent.score, episode, reward))
@@ -64,36 +77,6 @@ def main():
                 break
 
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
-            
-            
-            
-            
-
-
-    # while True:
-    #     if time.time() - time_limit >= 120:
-    #         print('time limit reached')
-    #         print(f'score: {agent.score}')
-    #         break
-    #     if time.time() - start >= 0.4:
-    #         chosen_spot = random_spot_chooser(grid, agent.get_pos())
-    #         if chosen_spot == None:
-    #             print('Mission Failed!! All cells have been occupied')
-    #             print(f'score: {agent.score}')
-    #             break
-    #         grid[chosen_spot.row][chosen_spot.column].state = True
-    #         start = time.time()
-        
-    #     grid = draw(SCREEN, grid, ROWS, COLUMNS, WIN_WIDTH, WIN_HEIGHT)
-        
-    #     agent.draw(SCREEN)
-        
-    #     event_listerners(agent)
-        
-    #     agent_object_picker(agent, grid)
-        
-    #     pygame.display.update()
-    #     fpsclock.tick(fps)
 
 if __name__ == '__main__':
     main()

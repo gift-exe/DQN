@@ -3,7 +3,6 @@ import random
 import time
 import numpy as np
 
-import NN
 global SCREEN
 WIN_HEIGHT = 196
 WIN_WIDTH = 392
@@ -147,7 +146,7 @@ def event_listerners(agent):
         if event.type == pygame.QUIT:
             pygame.quit()
             quit()
-        agent.listerner(event, agent)
+        agent.agent_listerner(event)
 
 def event_listerners_for_ai():
     for event in pygame.event.get():
@@ -159,27 +158,30 @@ def event_listerners_for_ai():
             quit()
 
 def check_if_episode_time_limit_is_reached(agent, episode_time_limit):
-    if time.time() - episode_time_limit >= 120:
+    if time.time() - episode_time_limit >= 30:
         print('\n\ntime limit reached\n\n')
         print(f'score: {agent.score}')
         return True
 
 def check_if_grid_filled_with_objects(agent, grid, object_spawn_interval):
     done = False
-    if time.time() - object_spawn_interval >= 1:
+    if time.time() - object_spawn_interval >= 0.4:
         chosen_spot = random_spot_chooser(grid, agent.get_pos())
         if chosen_spot == None:
             print('\n\nMission Failed!! All cells have been occupied\n')
             print(f'score: {agent.score}\n\n')
             done = True
+            return done, grid
         grid[chosen_spot.row][chosen_spot.column].state = True
         object_spawn_interval = time.time()
-    return done, grid
+    return done, grid, object_spawn_interval
 
 def check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid):
     done = check_if_episode_time_limit_is_reached(agent, episode_time_limit)
-    done, grid = check_if_grid_filled_with_objects(agent, grid, object_spawn_interval)
-    return done, grid
+    if done:
+        return done, grid, object_spawn_interval    
+    done, grid, object_spawn_interval = check_if_grid_filled_with_objects(agent, grid, object_spawn_interval)
+    return done, grid, object_spawn_interval
 
 def ai_act(agent, action):
     if action == 0:
@@ -209,8 +211,8 @@ def step(agent, action, grid, object_spawn_interval, episode_time_limit):
     event_listerners_for_ai()
     ai_act(agent, action)   
     reward = agent.object_picker(grid)    
-    done, curr_state = check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid)#new state after action
-    return curr_state, reward, done
+    done, curr_state, object_spawn_interval = check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid)#new state after action
+    return curr_state, reward, done, object_spawn_interval
     
 
 

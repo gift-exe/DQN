@@ -17,7 +17,7 @@ def feature_extractor(grid, agent):
 
     state_values = np.append(state_values, agent_pos)
 
-    return state_values.reshape(1, 99)
+    return state_values.reshape(99,)
 
 def neural_net(state, action_shape):
     '''
@@ -29,7 +29,7 @@ def neural_net(state, action_shape):
     learning_rate = 0.001
     init = tf.keras.initializers.HeUniform() #generate weights with uniform values
     model = keras.Sequential()
-    model.add(keras.layers.Dense(53, input_shape=state, activation='relu', kernel_initializer=init))
+    model.add(keras.layers.Dense(54, input_shape=state, activation='relu', kernel_initializer=init))
     model.add(keras.layers.Dense(action_shape, activation='linear', kernel_initializer=init))
     model.compile(loss=tf.keras.losses.Huber(), optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), metrics=['accuracy'])
     return model
@@ -48,36 +48,30 @@ def train(replay_memory, model, target_model, done):
     batch_size = 64*2
     mini_batch = random.sample(replay_memory, batch_size)
     current_states = np.array([(transition[0], transition[1]) for transition in mini_batch])
-    current_state_features = feature_extractor(current_states[0][0], current_states[0][1])
+    current_state_features = np.array([feature_extractor(current_state[0], current_state[1]) for current_state in current_states])
+    print('\n\ncurrent_state: ', current_state_features.shape, '\n\n')
     current_qs_list = model.predict(current_state_features)
     new_current_states = np.array([(transition[4], transition[1]) for transition in mini_batch])
-    new_current_state_features = feature_extractor(new_current_states[0][0], new_current_states[0][1])
+    new_current_state_features = np.array([feature_extractor(new_current_state[0], new_current_state[1]) for new_current_state in new_current_states])
+    print('\n\nnew_current_state: ', new_current_state_features.shape, '\n\n')
     future_qs_list = target_model.predict(new_current_state_features)
 
     X = []
     Y = []
 
-    for index, (observation, agent, action, reward, new_observation, done) in enumerate(mini_batch):
+    for index, (state, agent, action, reward, new_state, done) in enumerate(mini_batch):
         if not done:
-            max_future_q = reward + discount_factor * np.max(future_qs_list[0][index])
-            print('\n\n',future_qs_list[0][index],'\n\n')
+            max_future_q = reward + discount_factor * np.max(future_qs_list[index])
         else:
             max_future_q = reward
         
-        current_qs = current_qs_list[0]
+        current_qs = current_qs_list[index]
         current_qs[action] = (1-learning_rate) * current_qs[action] + learning_rate * max_future_q
+        
+        state_features = feature_extractor(state, agent)
 
-        X.append(observation)
+        X.append(state_features)
         Y.append(current_qs)
     
     model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=True)
 
-'''
-    Observation would have the state (position) of the agent, state (positions) of other cells in the env    
-
-    State 
-    Action
-    New State
-    Reward
-    Done
-'''
