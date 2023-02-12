@@ -35,5 +35,4 @@ def main():
         fpsclock.tick(fps)
 
 if __name__ == '__main__':
-    main()
-    print(agent.score)
+    main()  
