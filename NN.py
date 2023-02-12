@@ -46,14 +46,12 @@ def train(replay_memory, model, target_model, done):
         return
     
     batch_size = 64*2
-    mini_batch = random.sample(replay_memory, batch_size)
+    mini_batch = random.sample(replay_memory, batch_size) #stochastic gradient descent
     current_states = np.array([(transition[0], transition[1]) for transition in mini_batch])
     current_state_features = np.array([feature_extractor(current_state[0], current_state[1]) for current_state in current_states])
-    print('\n\ncurrent_state: ', current_state_features.shape, '\n\n')
     current_qs_list = model.predict(current_state_features)
     new_current_states = np.array([(transition[4], transition[1]) for transition in mini_batch])
     new_current_state_features = np.array([feature_extractor(new_current_state[0], new_current_state[1]) for new_current_state in new_current_states])
-    print('\n\nnew_current_state: ', new_current_state_features.shape, '\n\n')
     future_qs_list = target_model.predict(new_current_state_features)
 
     X = []
