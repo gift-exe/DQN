@@ -58,14 +58,18 @@ def train(replay_memory, model, target_model, done):
     Y = []
 
     for index, (state, agent, action, reward, new_state, done) in enumerate(mini_batch):
+        #Temporal Differene
         if not done:
             max_future_q = reward + discount_factor * np.max(future_qs_list[index])
         else:
             max_future_q = reward
         
         current_qs = current_qs_list[index]
-        current_qs[action] = (1-learning_rate) * current_qs[action] + learning_rate * max_future_q
+        #Bellman's Equation
+        current_qs[action] = (1-learning_rate) * current_qs[action] + learning_rate * max_future_q  
         
+        #TODO find a way visualize the updating of the q-values at each state
+
         state_features = feature_extractor(state, agent)
 
         X.append(state_features)
