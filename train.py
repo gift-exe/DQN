@@ -16,7 +16,7 @@ def main():
     min_epsilon = 0.01 # At a minimum, we'll always explore 1% of the time
     decay = 0.01
 
-    replay_memory = deque(maxlen=50_000)
+    replay_memory = deque(maxlen=1_000)
 
     # Main Model (updated every 4 steps)
     model = neural_net((99,), 8)
