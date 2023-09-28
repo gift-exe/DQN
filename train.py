@@ -60,7 +60,7 @@ def main():
             replay_memory.append([grid, agent, action, reward, new_state, done]) #grid == state
 
             if steps_to_update_target_model % 4 == 0 or done:
-                train(replay_memory, model, target_model, done)
+                history = train(replay_memory, model, target_model, done)
             
             grid = new_state
             agent.score += reward
@@ -77,6 +77,8 @@ def main():
                 break
 
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
+
+        return model, history
 
 if __name__ == '__main__':
     main()

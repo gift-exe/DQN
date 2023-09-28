@@ -75,5 +75,6 @@ def train(replay_memory, model, target_model, done):
         X.append(state_features)
         Y.append(current_qs)
     
-    model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=True)
+    history = model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=True)
+    return history
 
