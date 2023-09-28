@@ -78,7 +78,7 @@ def main():
 
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
 
-        return model, history
+    return model, history
 
 if __name__ == '__main__':
     main()
