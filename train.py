@@ -1,7 +1,7 @@
 from collections import deque
 
-from environment import *
-from NN import *
+from .environment import *
+from .NN import *
 
 
 def main():

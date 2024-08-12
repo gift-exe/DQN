@@ -1,4 +1,4 @@
-from environment import *
+from .environment import *
 
 def main():
     start = time.time()
