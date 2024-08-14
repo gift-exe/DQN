@@ -211,8 +211,8 @@ def step(agent, action, grid, object_spawn_interval, episode_time_limit):
     event_listerners_for_ai()
     ai_act(agent, action)   
     reward = agent.object_picker(grid)    
-    done, curr_state, object_spawn_interval = check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid)#new state after action
-    return curr_state, reward, done, object_spawn_interval
+    done, curr_grid, object_spawn_interval = check_if_current_episode_should_terminate(episode_time_limit, object_spawn_interval, agent, grid)#new state after action
+    return curr_grid, reward, done, object_spawn_interval
     
 
 

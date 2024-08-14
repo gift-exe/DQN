@@ -34,6 +34,17 @@ def neural_net(state, action_shape):
     model.compile(loss=tf.keras.losses.Huber(), optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), metrics=['accuracy'])
     return model
 
+def preprocess_minibatch(minibatch):
+    current_features, new_features = [], []
+    for transition in minibatch:
+        current_features.append(feature_extractor(grid=transition[0], agent=transition[1]))
+        new_features.append(feature_extractor(grid=transition[4], agent=transition[1]))
+    
+    current_features = np.array(current_features)
+    new_features = np.array(new_features)
+
+    return current_features, new_features
+    
 def train(replay_memory, model, target_model, done):
     '''
         qs >> q-state value pair
@@ -47,12 +58,9 @@ def train(replay_memory, model, target_model, done):
     
     batch_size = 64*2
     mini_batch = random.sample(replay_memory, batch_size) #stochastic gradient descent
-    current_states = np.array([(transition[0], transition[1]) for transition in mini_batch])
-    current_state_features = np.array([feature_extractor(current_state[0], current_state[1]) for current_state in current_states])
-    current_qs_list = model.predict(current_state_features)
-    new_current_states = np.array([(transition[4], transition[1]) for transition in mini_batch])
-    new_current_state_features = np.array([feature_extractor(new_current_state[0], new_current_state[1]) for new_current_state in new_current_states])
-    future_qs_list = target_model.predict(new_current_state_features)
+    current_features, current_features = preprocess_minibatch(mini_batch)
+    current_qs_list = model.predict(current_features)
+    future_qs_list = target_model.predict(current_features)
 
     X = []
     Y = []
